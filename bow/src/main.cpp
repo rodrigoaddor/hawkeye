@@ -4,7 +4,6 @@
 
 #define ssid "Hawkeye"
 #define pass "hawkeyequiver"
-#define port 7412
 
 #define host "http://192.168.4.1/?arrow="
 #define port 80
@@ -42,69 +41,26 @@ void loop() {
     int pin = pins[i][0];
     int arrow = pins[i][1];
     if (!digitalRead(pin)) {
-      Serial.print("Read pin ");
-      Serial.println(pin);
+      Serial.printf("Read pin %d, arrow %d\n", pin, arrow);
 
-      Serial.print("Sending ");
-      Serial.println(host + String(arrow));
+      for (int i = 0; i < 3; i++) {
+        String req = host + String(arrow);
+        Serial.printf("Sending request to %s\n", req.c_str());
 
-      HTTPClient http;
-      http.begin(host + String(arrow));
-      int httpCode = http.GET();
+        HTTPClient http;
+        http.begin(req);
+        int httpCode = http.GET();
 
-      if (httpCode == 200)
-        Serial.println("Success");
-      else
-        Serial.println("Error");
-
-      http.end();
+        http.end();
+        if (httpCode == 200) {
+          Serial.println("Success, leaving");
+          break;
+        } else {
+          Serial.printf("Error code %d, retrying\n", httpCode);
+        }
+      }
 
       while (!digitalRead(pin)) delay(100);
     }
   }
 }
-
-/*
-void loop() {
-  Serial.print("connecting to ");
-  Serial.print(host);
-  Serial.print(':');
-  Serial.println(port);
-
-  WiFiClient client;
-  if (!client.connect(host, port)) {
-    Serial.println("connection failed");
-    delay(5000);
-    return;
-  }
-
-  Serial.println("sending data to server");
-  if (client.connected()) {
-    client.println("hello from ESP8266");
-  }
-
-  // wait for data to be available
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
-      delay(60000);
-      return;
-    }
-  }
-
-  // Read all the lines of the reply from server and print them to Serial
-  Serial.println("receiving from remote server");
-  // not testing 'client.connected()' since we do not need to send data here
-  while (client.available()) {
-    char ch = static_cast<char>(client.read());
-    Serial.print(ch);
-  }
-
-  Serial.println();
-  Serial.println("closing connection");
-  client.stop();
-
-  delay(300000);
-}*/
